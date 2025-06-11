@@ -1,3 +1,5 @@
+import css from './App.module.css';
+
 export default function App() {
-  console.log('Hi');
+  console.log('hi');
 }
