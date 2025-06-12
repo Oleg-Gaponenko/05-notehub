@@ -6,7 +6,7 @@ interface NoteHubResponse {
     page: number;
     results: Note[];
     perPage: number;
-    total: number;
+    totalPages: number;
 }
 
 interface NoteHubParams {

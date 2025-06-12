@@ -1,8 +1,8 @@
-import { Formik } from 'formik';
+import { Field, Formik, Form, type FormikHelpers, ErrorMessage } from 'formik';
 import type { NoteTag } from '../../types/note';
 import css from './NoteForm.module.css';
 import * as Yup from 'yup';
-import { useMutation } from '@tanstack/react-query';
+import { QueryClient, useMutation } from '@tanstack/react-query';
 import { createNote } from '../../services/noteService';
 import { toast } from 'react-hot-toast';
 
@@ -18,66 +18,83 @@ const initialValues: NoteFormValues = {
   tag: 'Personal',
 };
 
-const validationSchema = Yup.object();
+const queryClient = new QueryClient();
+
+const validationSchema = Yup.object({
+  title: Yup.string().min(3).max(100).required('Title is required'),
+  content: Yup.string().min(3).max(500).required('Content is required'),
+  tag: Yup.string().oneOf(
+    ['Todo', 'Personal', 'Work', 'Meeting', 'Shopping'],
+    'Incorrect tag'
+  ),
+});
 
 export function NoteForm() {
   const mutation = useMutation({
     mutationFn: createNote,
     onSuccess: () => {
       toast.success('Note created successfully');
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
     },
     onError: () => {
       toast.error('Failed to create note');
     },
   });
 
-  const handleSubmit = () => {
-    //bla-bla
+  const handleSubmit = (
+    values: NoteFormValues,
+    { resetForm }: FormikHelpers<NoteFormValues>
+  ) => {
+    mutation.mutate(values);
+    resetForm();
   };
 
-  return(
-    <form className={css.form}>
-  <div className={css.formGroup}>
-    <label htmlFor="title">Title</label>
-    <input id="title" type="text" name="title" className={css.input} />
-    <span name="title" className={css.error} />
-  </div>
-
-  <div className={css.formGroup}>
-    <label htmlFor="content">Content</label>
-    <textarea
-      id="content"
-      name="content"
-      rows="8"
-      className={css.textarea}
-    />
-    <span name="content" className={css.error} />
-  </div>
-
-  <div className={css.formGroup}>
-    <label htmlFor="tag">Tag</label>
-    <select id="tag" name="tag" className={css.select}>
-      <option value="Todo">Todo</option>
-      <option value="Work">Work</option>
-      <option value="Personal">Personal</option>
-      <option value="Meeting">Meeting</option>
-      <option value="Shopping">Shopping</option>
-    </select>
-    <span name="tag" className={css.error} />
-  </div>
-
-  <div className={css.actions}>
-    <button type="button" className={css.cancelButton}>
-      Cancel
-    </button>
-    <button
-      type="submit"
-      className={css.submitButton}
-      disabled=false
+  return (
+    <Formik
+      initialValues={initialValues}
+      onSubmit={handleSubmit}
+      validationSchema={validationSchema}
     >
-      Create note
-    </button>
-  </div>
-</form>
-  )
+      <Form className={css.form}>
+        <div className={css.formGroup}>
+          <label htmlFor="title">Title</label>
+          <Field id="title" type="text" name="title" className={css.input} />
+          <ErrorMessage component="span" name="title" className={css.error} />
+        </div>
+
+        <div className={css.formGroup}>
+          <label htmlFor="content">Content</label>
+          <Field
+            as="textarea"
+            id="content"
+            name="content"
+            rows="8"
+            className={css.textarea}
+          />
+          <ErrorMessage component="span" name="content" className={css.error} />
+        </div>
+
+        <div className={css.formGroup}>
+          <label htmlFor="tag">Tag</label>
+          <Field as="select" id="tag" name="tag" className={css.select}>
+            <option value="Todo">Todo</option>
+            <option value="Work">Work</option>
+            <option value="Personal">Personal</option>
+            <option value="Meeting">Meeting</option>
+            <option value="Shopping">Shopping</option>
+          </Field>
+          <ErrorMessage component="span" name="tag" className={css.error} />
+        </div>
+
+        <div className={css.actions}>
+          <button type="button" className={css.cancelButton}>
+            Cancel
+          </button>
+          <button type="submit" className={css.submitButton}>
+            Create note
+          </button>
+        </div>
+      </Form>
+    </Formik>
+  );
 }
