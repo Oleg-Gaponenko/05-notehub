@@ -1,14 +1,13 @@
 import css from './NoteList.module.css';
-import {
-  useQuery,
-  keepPreviousData,
-  QueryClient,
-  useMutation,
-} from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Note } from '../../types/note';
 import { deleteNote, fetchNotes } from '../../services/noteService';
 import toast from 'react-hot-toast';
 import { useEffect } from 'react';
+import type { NoteHubResponse } from '../../services/noteService';
+import Loader from '../Loader/Loader';
+import ErrorMessage from '../ErrorMessage/ErrorMessage';
+import AbsentDataMessage from '../AbsentDataMessage/AbsentDataMessage';
 
 interface NoteListProps {
   search: string;
@@ -17,23 +16,30 @@ interface NoteListProps {
   onTotalPagesChange: (totalPages: number) => void;
 }
 
-const queryClient = new QueryClient();
-
-export function NoteList({
+export default function NoteList({
   search,
   page,
   perPage,
   onTotalPagesChange,
 }: NoteListProps) {
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['notes', search, page, perPage],
-    queryFn: () => fetchNotes({ search, page, perPage }),
-    placeholderData: keepPreviousData,
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteNote,
+    onSuccess: () => {
+      toast.success('Note was deleted');
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
+    },
+    onError: () => {
+      toast.error('Failed to delete note');
+    },
   });
 
-  if (isLoading) return <p>Notes are loading, please wait...</p>;
-  if (isError) return <p>An error has occured: {(error as Error).message} </p>;
-  if (!data || data.results.length === 0) return <p>Notes are not found.</p>;
+  const { data, isLoading, isError, error } = useQuery<NoteHubResponse, Error>({
+    queryKey: ['notes', search, page, perPage],
+    queryFn: () => fetchNotes({ search, page, perPage }),
+    placeholderData: previousData => previousData,
+  });
 
   useEffect(() => {
     if (data?.totalPages) {
@@ -41,9 +47,13 @@ export function NoteList({
     }
   }, [data, onTotalPagesChange]);
 
+  if (isLoading) return <Loader />;
+  if (isError) return <ErrorMessage message={error!.message} />;
+  if (!data?.notes?.length) return <AbsentDataMessage />;
+
   return (
     <ul className={css.list}>
-      {data.results.map((note: Note) => (
+      {data.notes.map((note: Note) => (
         <li key={note.id} className={css.listItem}>
           <h2 className={css.title}>{note.title}</h2>
           <p className={css.content}>{note.content}</p>
@@ -61,14 +71,3 @@ export function NoteList({
     </ul>
   );
 }
-
-const deleteMutation = useMutation({
-  mutationFn: deleteNote,
-  onSuccess: () => {
-    toast.success('Note was deleted');
-    queryClient.invalidateQueries({ queryKey: ['notes'] });
-  },
-  onError: () => {
-    toast.error('Failed to delete note');
-  },
-});

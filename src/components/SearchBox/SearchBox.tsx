@@ -6,7 +6,7 @@ interface SearchBoxProps {
   onChange: (value: string) => void;
 }
 
-export function SearchBox({ value, onChange }: SearchBoxProps) {
+export default function SearchBox({ value, onChange }: SearchBoxProps) {
   const [searchNote, setSearchNote] = useState(value);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {

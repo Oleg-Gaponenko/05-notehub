@@ -7,7 +7,7 @@ interface PaginationProps {
   totalPages?: number;
 }
 
-export function Pagination({
+export default function Pagination({
   currentPage,
   onPageChange,
   totalPages = 10,
