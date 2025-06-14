@@ -19,10 +19,6 @@ interface CreateNoteParams {
     tag: NoteTag;
 }
 
-interface DeleteNoteResponse {
-    id: string;
-}
-
 const noteHubToken = import.meta.env.VITE_NOTEHUB_TOKEN;
 const baseUrl = 'https://notehub-public.goit.study/api';
 
@@ -55,7 +51,7 @@ export async function createNote(newNote: CreateNoteParams): Promise<Note> {
     return response.data;    
 }
 
-export async function deleteNote (noteId:string): Promise<DeleteNoteResponse> {
-    const response: AxiosResponse<DeleteNoteResponse> = await instance.delete(`/notes/${noteId}`);
+export async function deleteNote (noteId:number): Promise<Note> {
+    const response: AxiosResponse<Note> = await instance.delete(`/notes/${noteId}`);
     return response.data;
 }

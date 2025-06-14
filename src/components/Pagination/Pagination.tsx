@@ -29,15 +29,7 @@ export default function Pagination({
       previousLabel="←"
       forcePage={currentPage - 1}
       containerClassName={css.pagination}
-      activeClassName="active"
-      pageClassName=""
-      previousClassName=""
-      nextClassName=""
-      breakClassName=""
-      pageLinkClassName=""
-      previousLinkClassName=""
-      nextLinkClassName=""
-      breakLinkClassName=""
+      activeClassName={css.active}
     />
   );
 }
